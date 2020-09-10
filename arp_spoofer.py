@@ -87,7 +87,7 @@ def main():
         result = arp_scan(args[0])
 
         # Header's table
-        print('{0} {1:>18}'.format('IP', 'MAC'))
+        print('{0} {1:>18} {2:>29}'.format('IP', 'MAC', 'Manufacturer'))
 
         # Print result in a nice align way
         for mapping in result:
