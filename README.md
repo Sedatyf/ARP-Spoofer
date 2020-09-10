@@ -11,4 +11,5 @@ As it's said in the previous definition, this attack is totally malicious but on
 
 ## Usage
 You need to have **Scapy** installed on your computer
-You need to be root or at least you need to have right to perform sudo command
+
+You need to be **root** or at least you need to have right to perform **sudo** command
