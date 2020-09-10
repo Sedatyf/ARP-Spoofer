@@ -8,3 +8,7 @@ ARP spoofing is a type of attack in which a malicious actor sends falsified ARP 
 As it's said in the previous definition, this attack is totally malicious but only on a local area. Do not attend this kind of attack without clear authorization. If you're getting caught using this on your job's network or a private network, you can have serious trouble. 
 
 **With that said, I cannot be made responsible if you have any problems after using this tool.** So use it with cautions or (this is better) with authorization from the owner's scanned device.
+
+## Usage
+You need to have **Scapy** installed on your computer
+You need to be root or at least you need to have right to perform sudo command
