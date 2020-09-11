@@ -10,6 +10,8 @@ As it's said in the previous definition, this attack is totally malicious but on
 **With that said, I cannot be made responsible if you have any problems after using this tool.** So use it with cautions or (this is better) with authorization from the owner's scanned device.
 
 ## Usage
+This script works only on Linux. But if you IP forward your Windows, and bypass enable_linux_iproute() methods, then it should work on your Windows computer
+
 You need to have **Scapy** installed on your computer as well as **requests**, **pyfiglet** and **termcolor**
 
 You need to be **root** or at least you need to have right to perform **sudo** command
