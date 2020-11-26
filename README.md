@@ -16,3 +16,8 @@ You need to have **Scapy** installed on your computer as well as **requests**, *
 You need to be **root** or at least you need to have right to perform **sudo** command
 
 You need to launch this script only once as it's sending forged packets to target and to impersonated host.
+
+You can have further instructions on how to make script works with the following command
+```command
+python3 arp_spoofer.py -h
+```
